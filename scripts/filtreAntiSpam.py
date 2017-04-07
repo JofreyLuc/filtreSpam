@@ -1,26 +1,28 @@
 import numpy as np
 from glob import glob
-import regex as re 
+import re
+from copy import deepcopy
 
 def charger_dictionnaire(dicoFilePath, minNbOfChar=3) :
     dico = {}
-    with open(dicoFilePath, 'r') as f :
-        for word in f :
-            word = ''.join(word.split())    # Enlève les éventuels whitespace
-            if len(word) < minNbOfChar:     # Si le mot est de longueur minimale
+    with open(dicoFilePath, 'r') as file :
+        for word in file :
+            word = ''.join(word.split())    # EnlÃ¨ve les Ã©ventuels whitespace
+            if len(word) >= minNbOfChar:    # Si le mot est de longueur minimale
                 dico[word.upper()] = False  # On capitalise le mot et on le place en clef du dico
     return dico
     
 def lire_message(messageFilePath, dico) :
-    with open(messageFilePath, 'r') as contenu:
-        content = content_file.read()
+    dicoPresence = deepcopy(dico)   # Copie le dictionnaire afin de ne pas modifier l'original
+    with open(messageFilePath, 'r') as file:
+        content = file.read()
         messageWords = re.split('\W+', content)
-        # On parcourt les mots présents dans le mail
+        # On parcourt les mots prÃ©sents dans le mail
         for word in messageWords :
-            if word.upper() in dico :
-                dico[word.upper()] = True
-     return dico
-
+            if word.upper() in dicoPresence :
+                dicoPresence[word.upper()] = True
+    return dicoPresence
+"""
 def apprendre_ham(dicoProbas, message, nbHam) :
     vecteurPresence = lire_message(message)
     for (mot : vecteurPresence) :
@@ -55,5 +57,4 @@ def predire_message(cheminMessage, nbSpam, nbHam, dicoProbas) :
             Pham *= dicoProbas[j][1]
         else :
             Pspam *= (1-dicoProbas[j][0])
-            Pham *= (1-dicoProbas[j][1])
-    
+            Pham *= (1-dicoProbas[j][1])"""    
