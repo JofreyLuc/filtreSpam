@@ -1,5 +1,5 @@
-import numpy as np
 from glob import glob
+from math import log
 
 def charger_dictionnaire() :
     1+1
@@ -37,9 +37,9 @@ def predire_message(cheminMessage, nbSpam, nbHam, dicoProbas) :
     #PASSAGE EN LOG
     for (j in dicoProbas) :
         if (j in vecteurPresence) :
-            Pspam *= dicoProbas[j][0]
-            Pham *= dicoProbas[j][1]
+            Pspam *= log(dicoProbas[j][0])
+            Pham *= log(dicoProbas[j][1])
         else :
-            Pspam *= (1-dicoProbas[j][0])
-            Pham *= (1-dicoProbas[j][1])
+            Pspam *= log((1-dicoProbas[j][0]))
+            Pham *= log((1-dicoProbas[j][1]))
     
