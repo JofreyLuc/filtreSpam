@@ -89,18 +89,18 @@ def predire_message(cheminMessage, nbSpam, nbHam, dicoProbas) :
     #On estime les probas à priori
     PspamApriori = nbSpam/(nbSpam+nbHam)
     PhamApriori = nbHam/(nbSpam+nbHam)    
-
+    
     Pspam = 1
     Pham = 1
     
     #On LAALALALALA
     for j in dicoProbas :
         if vecteurPresence[j] == True :
-            if dicoProbas[j][0] != 0 : Pspam += log(dicoProbas[j][0])
-            if dicoProbas[j][1] != 0 : Pham += log(dicoProbas[j][1])
+            if dicoProbas[j][0] > 0 : Pspam += log(dicoProbas[j][0])
+            if dicoProbas[j][1] > 0 : Pham += log(dicoProbas[j][1])
         else :
-            if dicoProbas[j][0] != 1 : Pspam += log((1-dicoProbas[j][0]))
-            if dicoProbas[j][1] != 1 : Pham += log((1-dicoProbas[j][1]))
+            if dicoProbas[j][0] < 1 : Pspam += log((1-dicoProbas[j][0]))
+            if dicoProbas[j][1] < 1 : Pham += log((1-dicoProbas[j][1]))
 
     return (Pspam * PspamApriori, Pham * PhamApriori)
 
@@ -115,18 +115,18 @@ def test_dossiers(spamFolder, hamFolder, nbSpam, nbHam, dicoProbas) :
         nbSpamsTest += 1
         probas = predire_message(nom, nbSpam, nbHam, dicoProbas)
         if (probas[0] >= probas[1]) :
-            print('Spam ' + nom + ' identifié comme spam (à ' + str(probas[0]*100) + '%)')
+            print('Spam ' + nom + ' identifié comme spam')
         else :
-            print('Spam ' + nom + ' identifié comme ham (à ' + str(probas[1]*100) + '%)')
+            print('Spam ' + nom + ' identifié comme ham **erreur**')
             nbErreursSpam += 1
             
     for nom in glob(hamFolder + '*.txt') :
         nbHamsTest += 1
         probas = predire_message(nom, nbSpam, nbHam, dicoProbas)
         if (probas[1] > probas[0]) :
-            print('Ham ' + nom + ' identifié comme ham (à ' + str(probas[1]*100) + '%)')
+            print('Ham ' + nom + ' identifié comme ham')
         else :
-            print('Ham ' + nom + ' identifié comme spam (à ' + str(probas[0]*100) + '%)')
+            print('Ham ' + nom + ' identifié comme spam **erreur**')
             nbErreursHam += 1
 
     if nbErreursSpam == 0 : print('0% d\'erreurs sur les spams')
