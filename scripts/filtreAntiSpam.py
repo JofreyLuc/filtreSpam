@@ -93,7 +93,7 @@ def predire_message(cheminMessage, nbSpam, nbHam, dicoProbas) :
     Pspam = 1
     Pham = 1
     
-    #On LAALALALALA
+    #On définit la somme des log des probas des mots
     for j in dicoProbas :
         if vecteurPresence[j] == True :
             if dicoProbas[j][0] > 0 : Pspam += log(dicoProbas[j][0])
@@ -113,30 +113,36 @@ def test_dossiers(spamFolder, hamFolder, nbSpam, nbHam, dicoProbas) :
 
     for nom in glob(spamFolder + '*.txt') :
         nbSpamsTest += 1
+        #PAS OUF, PROBLEMES DE PROBAS
         probas = predire_message(nom, nbSpam, nbHam, dicoProbas)
+        probaspam = abs(probas[0]/(probas[0]+probas[1]))/(nbSpam/(nbSpam+nbHam))
+        print('Spam ' + nom + ', P(SPAM) = {0:.2f}, P(HAM) = {1:.2f}'.format(probaspam, 1-probaspam))
         if (probas[0] >= probas[1]) :
-            print('Spam ' + nom + ' identifié comme spam')
+            print('-> identifié comme spam')
         else :
-            print('Spam ' + nom + ' identifié comme ham **erreur**')
+            print('-> identifié comme ham **erreur**')
             nbErreursSpam += 1
             
     for nom in glob(hamFolder + '*.txt') :
         nbHamsTest += 1
         probas = predire_message(nom, nbSpam, nbHam, dicoProbas)
+        probaspam = abs(probas[0]/(probas[0]+probas[1]))
+        probaham = abs(probas[1]/(probas[0]+probas[1]))
+        print('Ham ' + nom + ', P(SPAM) = {0:.2f}, P(HAM) = {1:.2f}'.format(probaspam, probaham))
         if (probas[1] > probas[0]) :
-            print('Ham ' + nom + ' identifié comme ham')
+            print('-> identifié comme ham')
         else :
-            print('Ham ' + nom + ' identifié comme spam **erreur**')
+            print('-> identifié comme spam **erreur**')
             nbErreursHam += 1
 
     if nbErreursSpam == 0 : print('0% d\'erreurs sur les spams')
-    else : print(str((nbErreursSpam/nbSpamsTest)*100) + '% d\'erreurs sur les spams')
+    else : print('{0:.2f}% d\'erreurs sur les spams'.format((nbErreursSpam/nbSpamsTest)*100))
 
     if nbErreursHam == 0 : print('0% d\'erreurs sur les hams')
-    else : print(str((nbErreursHam/nbHamsTest)*100) + '% d\'erreurs sur les hams')
+    else : print('{0:.2f}% d\'erreurs sur les hams'.format((nbErreursHam/nbHamsTest)*100))
 
     if (nbErreursSpam+nbErreursHam) == 0 : print('0% d\'erreurs sur l\'ensemble')
-    else : print(str(((nbErreursSpam+nbErreursHam)/(nbSpamsTest+nbHamsTest))*100) + '% d\'erreurs sur l\'ensemble')
+    else : print('{0:.2f}% d\'erreurs sur l\'ensemble'.format(((nbErreursSpam+nbErreursHam)/(nbSpamsTest+nbHamsTest))*100))
 
 
     
