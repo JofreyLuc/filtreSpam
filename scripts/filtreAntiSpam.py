@@ -57,7 +57,7 @@ def lire_message(messageFilePath, dico) :
     dicoPresence = deepcopy(dico)   # Copie le dictionnaire afin de ne pas modifier l'original
 
     for mot in dicoPresence : dicoPresence[mot] = False  # On met faux à la place des [0,0]
-
+    
     with open(messageFilePath, 'r', encoding='utf-8', errors='ignore') as file:
         content = file.read()
         messageWords = re.split('\W+', content) # Séparation des mots par la ponctuation + espaces
@@ -151,13 +151,13 @@ def apprendre_base(dicoProbas, dossierSpam, dossierHam, nbSpam, nbHam) :
 
     #On apprend nbSpam spams
     for m in glob(dossierSpam + '/*.txt') :
-        apprendre_spam(dicoProbas, m, nbSpam)
+        apprendre_spam(dicoProbas, nbSpam, m)
         spams+=1
         if spams >= nbSpam : break
         
     #On apprend nbHam hams
     for m in glob(dossierHam + '/*.txt') :
-        apprendre_ham(dicoProbas, m, nbHam)
+        apprendre_ham(dicoProbas, nbHam, m)
         hams+=1
         if hams >= nbHam : break
 
@@ -210,7 +210,7 @@ def predire_message(cheminMessage, nbSpam, nbHam, dicoProbas, PspamApriori, Pham
             logPspam += log((1-dicoProbas[j][0]))
             logPham += log((1-dicoProbas[j][1]))
 
-    return (logPspam * PspamApriori, logPham * PhamApriori)
+    return (logPspam + log(PspamApriori), logPham + log(PhamApriori))
 
 
 def test_dossiers(spamFolder, hamFolder, nbSpam, nbHam, dicoProbas, nbSpamsTest, nbHamsTest) :
@@ -222,14 +222,20 @@ def test_dossiers(spamFolder, hamFolder, nbSpam, nbHam, dicoProbas, nbSpamsTest,
     PspamApriori = nbSpam/(nbSpam+nbHam)
     PhamApriori = nbHam/(nbSpam+nbHam)
 
+    #print(PspamApriori)
+    #print(PhamApriori)
+    #input()
+    
     for nom in glob(spamFolder + '*.txt') :
         nbSpamsCourant += 1
         #PAS OUF, PROBLEMES DE PROBAS
         probas = predire_message(nom, nbSpam, nbHam, dicoProbas, PspamApriori, PhamApriori)
         probaspam = abs(probas[0]/(probas[0]+probas[1]))/(nbSpam/(nbSpam+nbHam))
-
+        
         print('Spam ' + nom + ', P(SPAM) = {0:.2f}, P(HAM) = {1:.2f}'.format(probaspam, 1-probaspam))
 
+        #print(probas)
+        
         if (probas[0] >= probas[1]) :
             print('-> identifié comme spam')
         else :
@@ -244,6 +250,9 @@ def test_dossiers(spamFolder, hamFolder, nbSpam, nbHam, dicoProbas, nbSpamsTest,
 
         print('Ham ' + nom + ', P(SPAM) = {0:.2f}, P(HAM) = {1:.2f}'.format(1-probaham, probaham))
 
+        #print(probas)
+        #input()
+        
         if (probas[1] > probas[0]) :
             print('-> identifié comme ham')
         else :
@@ -261,6 +270,8 @@ def test_dossiers(spamFolder, hamFolder, nbSpam, nbHam, dicoProbas, nbSpamsTest,
     if (nbErreursSpam+nbErreursHam) == 0 : print('0% d\'erreurs sur l\'ensemble')
     else : print('{0:.2f}% d\'erreurs sur l\'ensemble'.format(((nbErreursSpam+nbErreursHam)/(nbSpamsTest+nbHamsTest))*100))
 
+
+    
 DICO_PROBA_JSON_NAME = "DICO_PROBA"
 NB_SPAM_JSON_NAME    = "NB_SPAM"
 NB_HAM_JSON_NAME     = "NB_HAM"
