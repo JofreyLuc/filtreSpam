@@ -71,69 +71,87 @@ def apprendre_base(dicoProbas, dossierSpam, dossierHam, nbSpam, nbHam) :
 
     #On apprend nbSpam spams
     for m in glob(dossierSpam + '/*.txt') :
-        if spams < nbSpam :
-            apprendre_spam(dicoProbas, m, nbSpam)
-            spams+=1
-
+        apprendre_spam(dicoProbas, m, nbSpam)
+        spams+=1
+        if spams >= nbSpam : break
+        
     #On apprend nbHam hams
     for m in glob(dossierHam + '/*.txt') :
-        if hams < nbHam :
-            apprendre_ham(dicoProbas, m, nbHam)
-            hams+=1
+        apprendre_ham(dicoProbas, m, nbHam)
+        hams+=1
+        if hams >= nbHam : break
 
+        
+def lissage(dicoProbas, nbSpam, nbHam, epsilon) :
+    for mot in dicoProbas :
+        ancienneValeurSpam = dicoProbas[mot][0]
+        ancienneValeurSpam *= nbSpam
+        ancienneValeurSpam = (ancienneValeurSpam + epsilon) / (nbSpam + 2*epsilon)
+        dicoProbas[mot][0] = ancienneValeurSpam
 
+        ancienneValeurHam = dicoProbas[mot][1]
+        ancienneValeurHam *= nbHam
+        ancienneValeurHam = (ancienneValeurHam + epsilon) / (nbHam + 2*epsilon)
+        dicoProbas[mot][1] = ancienneValeurHam
+        
+            
 #Prédit la nature d'un message en renvoyant ses probas d'être un spam / ham
-def predire_message(cheminMessage, nbSpam, nbHam, dicoProbas) :
+def predire_message(cheminMessage, nbSpam, nbHam, dicoProbas, PspamApriori, PhamApriori) :
     vecteurPresence = lire_message(cheminMessage, dicoProbas)
 
-    #On estime les probas à priori
-    PspamApriori = nbSpam/(nbSpam+nbHam)
-    PhamApriori = nbHam/(nbSpam+nbHam)    
-    
-    Pspam = 1
-    Pham = 1
+    logPspam = 0
+    logPham = 0
     
     #On définit la somme des log des probas des mots
     for j in dicoProbas :
         if vecteurPresence[j] == True :
-            if dicoProbas[j][0] > 0 : Pspam += log(dicoProbas[j][0])
-            if dicoProbas[j][1] > 0 : Pham += log(dicoProbas[j][1])
+            logPspam += log(dicoProbas[j][0])
+            logPham += log(dicoProbas[j][1])
         else :
-            if dicoProbas[j][0] < 1 : Pspam += log((1-dicoProbas[j][0]))
-            if dicoProbas[j][1] < 1 : Pham += log((1-dicoProbas[j][1]))
+            logPspam += log((1-dicoProbas[j][0]))
+            logPham += log((1-dicoProbas[j][1]))
 
-    return (Pspam * PspamApriori, Pham * PhamApriori)
+    return (logPspam * PspamApriori, logPham * PhamApriori)
 
 
-def test_dossiers(spamFolder, hamFolder, nbSpam, nbHam, dicoProbas) :
-    nbSpamsTest = 0
-    nbHamsTest = 0
+def test_dossiers(spamFolder, hamFolder, nbSpam, nbHam, dicoProbas, nbSpamsTest, nbHamsTest) :
+    nbSpamsCourant = 0
+    nbHamsCourant = 0
     nbErreursSpam = 0
     nbErreursHam = 0
 
+    PspamApriori = nbSpam/(nbSpam+nbHam)
+    PhamApriori = nbHam/(nbSpam+nbHam)
+
     for nom in glob(spamFolder + '*.txt') :
-        nbSpamsTest += 1
+        nbSpamsCourant += 1
         #PAS OUF, PROBLEMES DE PROBAS
-        probas = predire_message(nom, nbSpam, nbHam, dicoProbas)
+        probas = predire_message(nom, nbSpam, nbHam, dicoProbas, PspamApriori, PhamApriori)
         probaspam = abs(probas[0]/(probas[0]+probas[1]))/(nbSpam/(nbSpam+nbHam))
+
         print('Spam ' + nom + ', P(SPAM) = {0:.2f}, P(HAM) = {1:.2f}'.format(probaspam, 1-probaspam))
+
         if (probas[0] >= probas[1]) :
             print('-> identifié comme spam')
         else :
             print('-> identifié comme ham **erreur**')
             nbErreursSpam += 1
+        if nbSpamsCourant >= nbSpamsTest : break
             
     for nom in glob(hamFolder + '*.txt') :
-        nbHamsTest += 1
-        probas = predire_message(nom, nbSpam, nbHam, dicoProbas)
-        probaspam = abs(probas[0]/(probas[0]+probas[1]))
-        probaham = abs(probas[1]/(probas[0]+probas[1]))
-        print('Ham ' + nom + ', P(SPAM) = {0:.2f}, P(HAM) = {1:.2f}'.format(probaspam, probaham))
+        nbHamsCourant += 1
+        probas = predire_message(nom, nbSpam, nbHam, dicoProbas, PspamApriori, PhamApriori)
+        probaham = abs(probas[1]/(probas[0]+probas[1]))/(nbHam/(nbSpam+nbHam))
+
+        print('Ham ' + nom + ', P(SPAM) = {0:.2f}, P(HAM) = {1:.2f}'.format(1-probaham, probaham))
+
         if (probas[1] > probas[0]) :
             print('-> identifié comme ham')
         else :
             print('-> identifié comme spam **erreur**')
             nbErreursHam += 1
+        if nbHamsCourant >= nbHamsTest : break
+        
 
     if nbErreursSpam == 0 : print('0% d\'erreurs sur les spams')
     else : print('{0:.2f}% d\'erreurs sur les spams'.format((nbErreursSpam/nbSpamsTest)*100))
@@ -162,7 +180,11 @@ def main() :
     print('Apprentissage...')
     apprendre_base(dictionnaire, '../baseapp/spam/', '../baseapp/ham/', nbSpam, nbHam)
 
+    print('Lissage...')
+    epsilon = 1
+    lissage(dictionnaire, nbSpam, nbHam, epsilon)
+    
     print('Tests :')
-    test_dossiers(sys.argv[1], sys.argv[2], nbSpam, nbHam, dictionnaire)
+    test_dossiers(sys.argv[1], sys.argv[2], nbSpam, nbHam, dictionnaire,100,100)
     
 main()
