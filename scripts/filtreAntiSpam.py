@@ -1,9 +1,14 @@
+from __future__ import print_function
 from glob import glob
 from math import log
 import re
 from copy import deepcopy
 import os
 import sys
+import json
+
+def eprint(*args, **kwargs):
+    print(*args, file=sys.stderr, **kwargs)
 
 def charger_dictionnaire(dicoFilePath, minNbOfChar=3) :
     """
@@ -74,10 +79,10 @@ def apprendre_ham(dicoProbas, nbHam, message) :
     dicoProbas : dict
         Les probabilités sous forme de dictionnaire.
         Modifié à la sortie de la fonction.
-        Fait partie des paramètres du classifieur.
+        Fait partie des attributs du classifieur.
     nbHam : int
         Le nombre totale de hams que le classifieur va apprendre.
-        Fait partie des paramètres du classifieur.
+        Fait partie des attributs du classifieur.
     message : str
         Le hame appris par le classifieur.
     """
@@ -102,10 +107,10 @@ def apprendre_spam(dicoProbas, nbSpam, message) :
     dicoProbas : dict
         Les probabilités sous forme de dictionnaire.
         Modifié à la sortie de la fonction.
-        Fait partie des paramètres du classifieur.
-    nbHam : int
+        Fait partie des attributs du classifieur.
+    nbSpam : int
         Le nombre totale de spams que le classifieur va apprendre.
-        Fait partie des paramètres du classifieur.
+        Fait partie des attributs du classifieur.
     message : str
         Le spam appris par le classifieur.
     """
@@ -121,6 +126,26 @@ def apprendre_spam(dicoProbas, nbSpam, message) :
 
 #Apprend l'ensemble des spams et hams de la base
 def apprendre_base(dicoProbas, dossierSpam, dossierHam, nbSpam, nbHam) :
+    """
+    Met à jour le classifieur en apprenant l'ensemble des spams et des hams de la base.
+    
+    Parameters
+    ----------
+    dicoProbas : dict
+        Les probabilités sous forme de dictionnaire.
+        Modifié à la sortie de la fonction.
+        Fait partie des attributs du classifieur.
+    dossierSpam : str
+        Le chemin du dossier qui contient tous les spams de la base d'apprentissage.
+    dossierHam : str
+        Le chemin du dossier qui contient tous les hams de la base d'apprentissage.
+    nbHam : int
+        Le nombre totale de spams que le classifieur va apprendre.
+        Fait partie des attributs du classifieur.
+    nbSpam : int
+        Le nombre totale de spams que le classifieur va apprendre.
+        Fait partie des attributs du classifieur.
+    """
     spams = 0
     hams = 0
 
@@ -139,6 +164,26 @@ def apprendre_base(dicoProbas, dossierSpam, dossierHam, nbSpam, nbHam) :
 
 #Prédit la nature d'un message en renvoyant ses probas d'être un spam / ham
 def predire_message(cheminMessage, nbSpam, nbHam, dicoProbas) :
+    """
+    Prédit la nature du message (spam/ham) à l'aide du classifieur
+    et retourne la probabilité qu'il s'agisse d'un spam et celle qu'il s'agisse d'un ham.
+        cheminMessage : str
+            Le chemin du message à analyser.
+        nbHam : int
+            Le nombre totale de spams que le classifieur a appris.
+            Fait partie des attributs du classifieur.
+        nbSpam : int
+            Le nombre totale de spams que le classifieur a appris.
+            Fait partie des attributs du classifieur.
+        dicoProbas : dict
+            Les probabilités sous forme de dictionnaire.
+            Fait partie des attributs du classifieur.
+    
+    Returns
+    -------
+    tuple
+        Un tuple de la forme (probabilité spam, probabilité ham).
+    """
     vecteurPresence = lire_message(cheminMessage, dicoProbas)
 
     #On estime les probas à priori
@@ -199,7 +244,27 @@ def test_dossiers(spamFolder, hamFolder, nbSpam, nbHam, dicoProbas) :
     if (nbErreursSpam+nbErreursHam) == 0 : print('0% d\'erreurs sur l\'ensemble')
     else : print('{0:.2f}% d\'erreurs sur l\'ensemble'.format(((nbErreursSpam+nbErreursHam)/(nbSpamsTest+nbHamsTest))*100))
 
-  
+DICO_PROBA_JSON_NAME = "DICO_PROBA"
+NB_SPAM_JSON_NAME    = "NB_SPAM"
+NB_HAM_JSON_NAME     = "NB_HAM"
+    
+def sauvegarderClassifieur(dicoProbas, nbSpam, nbHam, cheminFichier):
+    with open(cheminFichier, 'w') as f:
+        jsonData = {}
+        json.dump({DICO_PROBA_JSON_NAME:nbSpam, NB_HAM_JSON_NAME:nbHam, DICO_PROBA_JSON_NAME:dicoProbas}, f)
+
+def chargerClassifieur(cheminFichier):
+    with open(cheminFichier, 'r') as f:
+        try:
+            jsonData = json.load(f)
+            dicoProbas = jsonData[DICO_PROBA_JSON_NAME]
+            nbSpam = jsonData[NB_SPAM_JSON_NAME]
+            nbHam = jsonData[NB_HAM_JSON_NAME]
+        except (ValueError, KeyError) as e:
+            eprint("Fichier invalide : ", cheminFichier)
+            exit(-1)
+    return (dicoProbas, nbSpam, nbHam)
+    
 def main() :
     nbMaxSpam = len([nom for nom in glob('../baseapp/spam/*.txt')])
     nbMaxHam = len([nom for nom in glob('../baseapp/ham/*.txt')])
