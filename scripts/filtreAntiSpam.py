@@ -5,10 +5,23 @@ from copy import deepcopy
 import os
 import sys
 
-#Renvoie un dictionnaire crée depuis un fichier texte
 def charger_dictionnaire(dicoFilePath, minNbOfChar=3) :
-    #On utilise un dictionnaire qui lie chaque mot à un tableau[2] contenant ses probas
-    #d'apparaître dans un spam ou dans un ham (au début [0,0])
+    """
+    Charge un dictionnaire de mots depuis un fichier texte.
+    
+    Parameters
+    ----------
+    dicoFilePath : str
+        Le chemin du fichier texte contenant le dictionnaire.
+        Le dictionnaire doit contenir un seul mot par ligne (sans espace).
+    minNbOfChar : int
+        Le nombre de caractères minimal à partir duquel un mot est pris en compte.
+    
+    Returns
+    -------
+    dict
+        Un dictionnaire avec chaque mot en capital comme clef et un tableau [0, 0] comme valeur.
+    """
 
     dico = {}
 
@@ -20,26 +33,54 @@ def charger_dictionnaire(dicoFilePath, minNbOfChar=3) :
 
     return dico
 
-
-#Renvoie un vecteur unitaire de mots correspondant à un message
 def lire_message(messageFilePath, dico) :
+    """
+    Lit un message et le traduit en une représentation sous forme de vecteur binaire x à partir d’un dictionnaire.
+    
+    Parameters
+    ----------
+    messageFilePath : str
+        Le chemin du fichier texte contenant le message/mail à lire.
+    dico : dict
+        Le dictionnaire de mots dont la présence est vérifiée.
+    
+    Returns
+    -------
+    dict
+        Un dictionnaire représentant le vecteur binaire (mot -> booléen).
+    """
     dicoPresence = deepcopy(dico)   # Copie le dictionnaire afin de ne pas modifier l'original
 
-    for mot in dicoPresence : dicoPresence[mot] = False  #On met faux à la place des [0,0]
+    for mot in dicoPresence : dicoPresence[mot] = False  # On met faux à la place des [0,0]
 
     with open(messageFilePath, 'r', encoding='utf-8', errors='ignore') as file:
         content = file.read()
-        messageWords = re.split('\W+', content) #Séparation des mots par la ponctuation + espaces
+        messageWords = re.split('\W+', content) # Séparation des mots par la ponctuation + espaces
         # On parcourt les mots présents dans le mail
         for word in messageWords :
             if word.upper() in dicoPresence :
-                dicoPresence[word.upper()] = True #Si le mot capitalisé est dans le dictionnaire et dans le message
+                dicoPresence[word.upper()] = True # Si le mot capitalisé est dans le dictionnaire et dans le message
                 
     return dicoPresence
 
 
 #Apprend un ham en modifiant les probabilités dans le dico
-def apprendre_ham(dicoProbas, message, nbHam) :
+def apprendre_ham(dicoProbas, nbHam, message) :
+    """
+    Met à jour le classifieur en apprenant le ham.
+    
+    Parameters
+    ----------
+    dicoProbas : dict
+        Les probabilités sous forme de dictionnaire.
+        Modifié à la sortie de la fonction.
+        Fait partie des paramètres du classifieur.
+    nbHam : int
+        Le nombre totale de hams que le classifieur va apprendre.
+        Fait partie des paramètres du classifieur.
+    message : str
+        Le hame appris par le classifieur.
+    """
     vecteurPresence = lire_message(message, dicoProbas)
     
     for mot in (present for present in vecteurPresence if vecteurPresence[present] == True) :
@@ -52,7 +93,22 @@ def apprendre_ham(dicoProbas, message, nbHam) :
 
 
 #Apprend un spam en modifiant les probabilités dans le dico        
-def apprendre_spam(dicoProbas, message, nbSpam) :
+def apprendre_spam(dicoProbas, nbSpam, message) :
+    """
+    Met à jour le classifieur en apprenant le spam.
+    
+    Parameters
+    ----------
+    dicoProbas : dict
+        Les probabilités sous forme de dictionnaire.
+        Modifié à la sortie de la fonction.
+        Fait partie des paramètres du classifieur.
+    nbHam : int
+        Le nombre totale de spams que le classifieur va apprendre.
+        Fait partie des paramètres du classifieur.
+    message : str
+        Le spam appris par le classifieur.
+    """
     vecteurPresence = lire_message(message, dicoProbas)
 
     for mot in (present for present in vecteurPresence if vecteurPresence[present] == True) :
@@ -62,7 +118,6 @@ def apprendre_spam(dicoProbas, message, nbSpam) :
         ancienneValeur += 1
         ancienneValeur /= nbSpam
         dicoProbas[mot][0] = ancienneValeur
-
 
 #Apprend l'ensemble des spams et hams de la base
 def apprendre_base(dicoProbas, dossierSpam, dossierHam, nbSpam, nbHam) :
@@ -94,7 +149,6 @@ def lissage(dicoProbas, nbSpam, nbHam, epsilon) :
         ancienneValeurHam = (ancienneValeurHam + epsilon) / (nbHam + 2*epsilon)
         dicoProbas[mot][1] = ancienneValeurHam
         
-            
 #Prédit la nature d'un message en renvoyant ses probas d'être un spam / ham
 def predire_message(cheminMessage, nbSpam, nbHam, dicoProbas, PspamApriori, PhamApriori) :
     vecteurPresence = lire_message(cheminMessage, dicoProbas)
@@ -162,8 +216,7 @@ def test_dossiers(spamFolder, hamFolder, nbSpam, nbHam, dicoProbas, nbSpamsTest,
     if (nbErreursSpam+nbErreursHam) == 0 : print('0% d\'erreurs sur l\'ensemble')
     else : print('{0:.2f}% d\'erreurs sur l\'ensemble'.format(((nbErreursSpam+nbErreursHam)/(nbSpamsTest+nbHamsTest))*100))
 
-
-    
+  
 def main() :
     nbMaxSpam = len([nom for nom in glob('../baseapp/spam/*.txt')])
     nbMaxHam = len([nom for nom in glob('../baseapp/ham/*.txt')])
