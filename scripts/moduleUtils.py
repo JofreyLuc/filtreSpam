@@ -2,8 +2,16 @@
 Module contenant quelques fonctions utilitaires.
 """
 
+from __future__ import print_function
 from argparse import ArgumentTypeError
 import os
+import sys
+
+def eprint(*args, **kwargs):
+    """
+    Ecrit sur stderr.
+    """
+    print(*args, file=sys.stderr, **kwargs)
 
 def is_positive_integer(value):
     """

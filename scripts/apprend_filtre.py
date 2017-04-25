@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 """
 Réalise l'apprentissage du filtre anti-spam basé sur le classifieur naïf de Bayes
-avec la base d'apprentissage et sur le nombre de spam et de ham passés en paramètres.
+avec la base d'apprentissage et sur le nombre de spam et de ham passés en paramètres
+et sauvegarde le classifieur/filtre dans le fichier passé en argument.
 Si les nombres de spam et de ham ne sont pas précisés, l'ensemble de la base d'apprentissage sera utilisé.
 """
 
@@ -9,7 +10,10 @@ from glob import glob
 import argparse
 import os
 from moduleUtils import is_positive_integer, is_valid_directory
-from moduleFiltreAntiSpam import charger_dictionnaire, apprendre_base, sauvegarder_filtre
+from moduleFiltreAntiSpam import charger_dictionnaire, apprendre_base, sauvegarder_filtre, lissage
+
+#: Paramètre du lissage
+EPSILON = 1
 
 def main():
     # On parse les arguments
@@ -19,9 +23,9 @@ def main():
     parser.add_argument("repAppr", metavar="répertoireApprentissage", type=is_valid_directory,
                         help="répertoire contenant la base d'apprentissage (contenant 2 sous-répertoires spam et ham).")
     parser.add_argument("nbSpam", nargs='?', metavar="nbSpam", type=is_positive_integer,
-                        help="nombre de spam à apprendre parmi ceux de la base d'apprentissage.")
+                        help="(optionnel) nombre de spam à apprendre parmi ceux de la base d'apprentissage.")
     parser.add_argument("nbHam", nargs='?', metavar="nbHam", type=is_positive_integer,
-                        help="nombre de ham à apprendre parmi ceux de la base d'apprentissage.")                  
+                        help="(optionnel) nombre de ham à apprendre parmi ceux de la base d'apprentissage.")                  
     args = parser.parse_args()
     
     spamDir = os.path.join(args.repAppr, 'spam')
@@ -43,6 +47,9 @@ def main():
     dicoProbas = charger_dictionnaire('../dictionnaire1000en.txt')
     print("Apprentissage sur " + str(nbSpam) + " spams et " + str(nbHam) + " hams...")
     apprendre_base(dicoProbas, spamDir, hamDir, nbSpam, nbHam)
+    # On lisse
+    print("Lissage...")
+    lissage(dicoProbas, nbSpam, nbHam, EPSILON)
     # On sauvegarde le filtre
     sauvegarder_filtre(args.fichierFiltre, dicoProbas, nbSpam , nbHam)
     print("Classifieur enregistré dans '" + args.fichierFiltre + "'.")

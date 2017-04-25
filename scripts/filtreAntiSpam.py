@@ -4,7 +4,7 @@ Réalise l'apprentissage du filtre anti-spam basé sur le classifieur naïf de B
 avec la base d'apprentissage contenue dans le répertoire baseapp par défaut ou avec celui passé en paramètre
 et effectue des tests sur la base de test passée en paramètre
 et éventuellement le nombre de spam et de ham de cette base à tester.
-Si les nombres de spam et de ham ne sont pas précisés, l'ensemble de la base sera utilisé.
+Si les nombres de spam et de ham à tester ne sont pas précisés, l'ensemble de la base de test sera utilisé.
 """
 
 from glob import glob
@@ -22,9 +22,9 @@ def main() :
     parser.add_argument("repTest", metavar="répertoireTest", type=is_valid_directory,
                         help="répertoire contenant la base de test (contenant 2 sous-répertoires spam et ham).")
     parser.add_argument("nbSpamTest", nargs='?', metavar="nbSpam", type=is_positive_integer, 
-                        help="nombre de spam à tester parmi ceux de la base de test.")
+                        help="(optionnel) nombre de spam à tester parmi ceux de la base de test.")
     parser.add_argument("nbHamTest", nargs='?', metavar="nbHam", type=is_positive_integer, 
-                        help="nombre de ham à tester parmi ceux de la base de test.")
+                        help="(optionnel) nombre de ham à tester parmi ceux de la base de test.")
     parser.add_argument("-a", "--apprentissage", required = False, metavar="répertoireApprentissage", dest="repAppr", type=is_valid_directory,
                         help="le répertoire contenant la base d'apprentissage (contenant 2 sous-répertoires spam et ham).\nPar défaut, c'est le dossier baseapp qui sera utilisé.", )
     args = parser.parse_args()
@@ -68,15 +68,15 @@ def main() :
     
     # On demande à l'utilisateur de préciser le nombre de spam et de ham à utiliser pour l'apprentissage
     nbSpamAppr = ask_input_for_integer_between_bounds('Spams dans la base d\'apprentissage ? (max ' + str(nbMaxSpamAppr) + ') ',
-                                                      0, nbMaxSpamAppr)
+                                                      1, nbMaxSpamAppr)
                         
     nbHamAppr = ask_input_for_integer_between_bounds('Hams dans la base d\'apprentissage ? (max ' + str(nbMaxHamAppr) + ') ',
-                                                     0, nbMaxHamAppr)
+                                                     1, nbMaxHamAppr)
 
     # Apprentissage
     dicoProbas = charger_dictionnaire('../dictionnaire1000en.txt')
     print('Apprentissage...')
-    apprendre_base(dicoProbas, '../baseapp/spam/', '../baseapp/ham/', nbSpamAppr, nbHamAppr)
+    apprendre_base(dicoProbas, spamApprDir, hamApprDir, nbSpamAppr, nbHamAppr)
 
     print('Lissage...')
     epsilon = 1

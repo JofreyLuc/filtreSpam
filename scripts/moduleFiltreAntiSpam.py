@@ -2,7 +2,6 @@
 Module contenant toutes les fonctions liées au filtre anti-spam.
 """
 
-from __future__ import print_function
 from glob import glob
 from math import log
 import re
@@ -228,7 +227,7 @@ def test_dossiers(spamFolder, hamFolder, nbSpam, nbHam, dicoProbas, nbSpamsTest,
     #print(PhamApriori)
     #input()
     
-    for msgFilePath in glob(path.join(spamFolder + '*.txt')) :
+    for msgFilePath in glob(path.join(spamFolder, '*.txt')) :
         nbSpamsCourant += 1
         #PAS OUF, PROBLEMES DE PROBAS
         probas = predire_message(msgFilePath, nbSpam, nbHam, dicoProbas, PspamApriori, PhamApriori)
@@ -262,7 +261,7 @@ def test_dossiers(spamFolder, hamFolder, nbSpam, nbHam, dicoProbas, nbSpamsTest,
             nbErreursHam += 1
         if nbHamsCourant >= nbHamsTest : break
         
-
+    print("\n")
     if nbErreursSpam == 0 : print('0% d\'erreurs sur les spams')
     else : print('{0:.2f}% d\'erreurs sur les spams'.format((nbErreursSpam/nbSpamsTest)*100))
 
@@ -321,6 +320,6 @@ def charger_filtre(cheminFichier):
             nbHam = jsonData[NB_HAM_JSON_NAME]
             dicoProbas = jsonData[DICO_PROBA_JSON_NAME]
         except (ValueError, KeyError) as e:
-            raise ValueError('Le fichier' + cheminFichier + 'n\'est pas un fichier de filtre valide.')
+            raise ValueError("Le fichier " + cheminFichier + " n'est pas un fichier de filtre valide.")
             
     return (dicoProbas, nbSpam, nbHam)
