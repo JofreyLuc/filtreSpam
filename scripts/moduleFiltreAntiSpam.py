@@ -4,7 +4,7 @@ Module contenant toutes les fonctions liées au filtre anti-spam.
 
 from __future__ import print_function
 from glob import glob
-from math import log
+from math import log, exp
 import re
 from copy import deepcopy
 import os
@@ -228,14 +228,20 @@ def test_dossiers(spamFolder, hamFolder, nbSpam, nbHam, dicoProbas, nbSpamsTest,
     #print(PhamApriori)
     #input()
     
-    for msgFilePath in glob(path.join(spamFolder + '*.txt')) :
+    for msgFilePath in glob(path.join(spamFolder, '*.txt')) :
         nbSpamsCourant += 1
         #PAS OUF, PROBLEMES DE PROBAS
         probas = predire_message(msgFilePath, nbSpam, nbHam, dicoProbas, PspamApriori, PhamApriori)
-        probaspam = abs(probas[0]/(probas[0]+probas[1]))/(nbSpam/(nbSpam+nbHam))
+        #probaspam = abs(probas[0]/(probas[0]+probas[1]))/(nbSpam/(nbSpam+nbHam))
+
+        print(probas)
+        print(exp(probas[0]))
+        print(exp(probas[1]))
+
+        probaspam = PspamApriori*exp(probas[0]) / ((exp(probas[0])*PspamApriori)+(exp(probas[1])*PhamApriori))
         
         print('Spam ' + msgFilePath + ', P(SPAM) = {0:.2f}, P(HAM) = {1:.2f}'.format(probaspam, 1-probaspam))
-
+        input()
         #print(probas)
         
         if (probas[0] >= probas[1]) :
