@@ -366,3 +366,27 @@ def charger_filtre(cheminFichier):
             raise ValueError("Le fichier " + cheminFichier + " n'est pas un fichier de filtre valide.")
             
     return (dicoProbas, nbSpam, nbHam)
+
+def ajouter_mail(dicoProbas, nbSpam, nbHam, fichierMail, epsilon, isSpam) :
+    vecteurPresence = lire_message(dicoProbas, fichierMail)
+    
+    for mot in dicoProbas :
+        if isSpam :
+            exNbSpam = (nbSpam + 2 * epsilon)
+            nb_occu = (dicoProbas[mot][0] * exNbSpam) - epsilon
+            if vecteurPresence[mot] == True : nb_occu += 1
+            nb_occu += epsilon
+            exNbSpam += 1
+            dicoProbas[0][typeM] = nb_occu / exNbSpam
+        else :
+            exNbHam = (nbHam + 2 * epsilon)
+            nb_occu = (dicoProbas[mot][1] * exNbHam) - epsilon
+            if vecteurPresence[mot] == True : nb_occu += 1
+            nb_occu += epsilon
+            exNbHam += 1
+            dicoProbas[1][typeM] = nb_occu / exNbHam
+        
+    if isSpam : nbSpam += 1
+    else : nbHam += 1
+        
+        

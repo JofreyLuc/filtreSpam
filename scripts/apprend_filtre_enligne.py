@@ -23,10 +23,10 @@ def main():
     isSpam = args.type == "SPAM"
     
     # Apprentissage en ligne
-    (dicoProbas, nbSpam, nbHam) = charger_filtre(mail)
-    # TODO
+    (dicoProbas, nbSpam, nbHam) = charger_filtre(mail)    
     
     print("Modification du filtre '" + fichierFiltre + "' par apprentissage sur le " + type + " '" + mail + "'.")
 
+    
 if __name__ == '__main__':
     main()
