@@ -33,7 +33,7 @@ def main():
     else:                           # Non précisé
         currentDir = os.getcwd()
         dict = os.path.join(currentDir, DEFAULT_DICT)   # Fichier par défaut dans le répertoire courant
-        if not os.path.isdir(dict): # On vérifie que le fichier par défaut existe
+        if not os.path.isfile(dict): # On vérifie que le fichier par défaut existe
             raise ValueError("Le dictionnaire par défaut '" + DEFAULT_DICT + "' est introuvable dans " + currentDir + ".\nSi vous souhaitez utiliser un autre dictionnaire pour l'apprentissage, utilisez l'option -d.")
         dict = DEFAULT_DICT
     
