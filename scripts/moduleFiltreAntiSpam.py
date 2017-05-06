@@ -377,14 +377,14 @@ def ajouter_mail(dicoProbas, nbSpam, nbHam, fichierMail, epsilon, isSpam) :
             if vecteurPresence[mot] == True : nb_occu += 1
             nb_occu += epsilon
             exNbSpam += 1
-            dicoProbas[0][typeM] = nb_occu / exNbSpam
+            dicoProbas[mot][0] = nb_occu / exNbSpam
         else :
             exNbHam = (nbHam + 2 * epsilon)
             nb_occu = (dicoProbas[mot][1] * exNbHam) - epsilon
             if vecteurPresence[mot] == True : nb_occu += 1
             nb_occu += epsilon
             exNbHam += 1
-            dicoProbas[1][typeM] = nb_occu / exNbHam
+            dicoProbas[mot][1] = nb_occu / exNbHam
         
     if isSpam : nbSpam += 1
     else : nbHam += 1
