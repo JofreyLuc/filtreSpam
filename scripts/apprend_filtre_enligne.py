@@ -25,6 +25,10 @@ def main():
     # Apprentissage en ligne
     (dicoProbas, nbSpam, nbHam) = charger_filtre(fichierFiltre)
     ajouter_mail(dicoProbas, nbSpam, nbHam, mail, EPSILON, isSpam)
+    if isSpam:
+        nbSpam+=1
+    else:
+        nbHam+=1
     sauvegarder_filtre(fichierFiltre, dicoProbas, nbSpam, nbHam)
 
     print("Modification du filtre '" + fichierFiltre + "' par apprentissage sur le " + args.type + " '" + mail + "'.")
