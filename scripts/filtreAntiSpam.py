@@ -10,11 +10,8 @@ Si les nombres de spam et de ham à tester ne sont pas précisés, l'ensemble de
 from glob import glob
 import os
 import argparse
-from moduleUtils import is_positive_integer, is_valid_directory, ask_input_for_integer_between_bounds
-from moduleFiltreAntiSpam import charger_dictionnaire, apprendre_base, lissage, test_dossiers
-
-#: Le répertoire d'apprentissage par défaut
-DEFAULT_REP_APPR = "../baseapp"
+from moduleUtils import is_positive_integer, is_valid_directory, is_valid_file, ask_input_for_integer_between_bounds, eprint
+from moduleFiltreAntiSpam import charger_dictionnaire, apprendre_base, lissage, test_dossiers, DEFAULT_REP_APPR, DEFAULT_DICT, EPSILON
 
 def main() :
     # On parse les arguments
@@ -26,7 +23,9 @@ def main() :
     parser.add_argument("nbHamTest", nargs='?', metavar="nbHam", type=is_positive_integer, 
                         help="(optionnel) nombre de ham à tester parmi ceux de la base de test.")
     parser.add_argument("-a", "--apprentissage", required = False, metavar="répertoireApprentissage", dest="repAppr", type=is_valid_directory,
-                        help="le répertoire contenant la base d'apprentissage (contenant 2 sous-répertoires spam et ham).\nPar défaut, c'est le dossier baseapp qui sera utilisé.", )
+                        help="le répertoire contenant la base d'apprentissage (contenant 2 sous-répertoires spam et ham).\nPar défaut, c'est le dossier '" + DEFAULT_REP_APPR + "' qui sera utilisé.")
+    parser.add_argument("-d", "--dictionnaire", required = False, metavar="dictionnaire", dest="dict", type=is_valid_file,
+                        help="le dictionnaire contenant les mots à prendre en compte.\nPar défault, c'est le fichier '" + DEFAULT_DICT + "' qui sera utilisé.")
     args = parser.parse_args()
     
     # Base de test
@@ -44,6 +43,17 @@ def main() :
     nbSpamTest = min(i for i in [args.nbSpamTest, nbMaxSpamTest] if i is not None)
     nbHamTest = min(i for i in [args.nbHamTest, nbMaxHamTest] if i is not None)
     
+    # Dictionnaire
+    if args.dict is not None:       # Dico précisé
+        dict = args.dict
+    else:                           # Non précisé
+        currentDir = os.getcwd()
+        dict = os.path.join(currentDir, DEFAULT_DICT)   # Fichier par défaut dans le répertoire courant
+        if not os.path.isfile(dict): # On vérifie que le fichier par défaut existe
+            eprint("Le dictionnaire par défaut '" + DEFAULT_DICT + "' est introuvable dans " + currentDir + ".\nSi vous souhaitez utiliser un autre dictionnaire pour l'apprentissage, utilisez l'option -d.")
+            exit(-1)
+        dict = DEFAULT_DICT
+    
     # Base d'apprentissage 
     if args.repAppr is not None:    # Rép appr précisé
         repAppr = args.repAppr
@@ -51,7 +61,8 @@ def main() :
         currentDir = os.getcwd()
         repAppr = os.path.join(currentDir, DEFAULT_REP_APPR)   # Dossier par défaut dans le répertoire courant
         if not os.path.isdir(repAppr): # On vérifie que le dossier par défaut existe
-            raise ValueError("Le répertoire d'apprentissage par défaut '" + DEFAULT_REP_APPR + "' est introuvable dans " + currentDir + ".\nSi vous souhaitez utiliser un autre répertoire pour l'apprentissage, utilisez l'option -a.")
+            eprint("Le répertoire d'apprentissage par défaut '" + DEFAULT_REP_APPR + "' est introuvable dans " + currentDir + ".\nSi vous souhaitez utiliser un autre répertoire pour l'apprentissage, utilisez l'option -a.")
+            exit(-1)
         repAppr = DEFAULT_REP_APPR
         
     spamApprDir = os.path.join(repAppr, 'spam')
@@ -74,13 +85,12 @@ def main() :
                                                      1, nbMaxHamAppr)
 
     # Apprentissage
-    dicoProbas = charger_dictionnaire('../dictionnaire1000en.txt')
+    dicoProbas = charger_dictionnaire(dict)
     print('Apprentissage...')
     apprendre_base(dicoProbas, spamApprDir, hamApprDir, nbSpamAppr, nbHamAppr)
 
     print('Lissage...')
-    epsilon = 1
-    lissage(dicoProbas, nbSpamAppr, nbHamAppr, epsilon)
+    lissage(dicoProbas, nbSpamAppr, nbHamAppr, EPSILON)
     
     # Tests
     print('Tests :')

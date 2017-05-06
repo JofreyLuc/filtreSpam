@@ -3,7 +3,7 @@ Module contenant toutes les fonctions liées au filtre anti-spam.
 """
 
 from glob import glob
-from math import log
+from math import log, exp
 import re
 from copy import deepcopy
 import os
@@ -11,12 +11,22 @@ import sys
 import json
 from os import path
 
+# Paramètres par défaut
+#: Le répertoire d'apprentissage par défaut
+DEFAULT_REP_APPR = "../baseapp"
+#: Le dictionnaire par défaut
+DEFAULT_DICT = "../dictionnaire1000en.txt"
+#: Le nombre de caractères minimum à partir duquel un mot du dictionnaire est pris en compte
+DEFAULT_MIN_CHAR_DICT = 3
+#: Paramètre du lissage
+EPSILON = 1
+
 # Identifieurs des différents champs pour la sauvegarde du classifieur dans un fichier json
 DICO_PROBA_JSON_NAME = "DICO_PROBA"
 NB_SPAM_JSON_NAME    = "NB_SPAM"
 NB_HAM_JSON_NAME     = "NB_HAM"
 
-def charger_dictionnaire(dicoFilePath, minNbOfChar=3) :
+def charger_dictionnaire(dicoFilePath, minNbOfChar=DEFAULT_MIN_CHAR_DICT) :
     """
     Charge un dictionnaire de mots depuis un fichier texte.
     
@@ -163,6 +173,24 @@ def apprendre_base(dicoProbas, dossierSpam, dossierHam, nbSpam, nbHam) :
 
         
 def lissage(dicoProbas, nbSpam, nbHam, epsilon) :
+    """
+    Réalise le lissage des probas afin d'éviter les probas nulles.
+    
+    Parameters
+    ----------
+    dicoProbas : dict
+        Les probabilités sous forme de dictionnaire.
+        Modifié à la sortie de la fonction.
+        Fait partie des attributs du classifieur.
+    nbSpam : int
+        Le nombre totale de spams que le classifieur a appris.
+        Fait partie des attributs du classifieur.
+    nbHam : int
+        Le nombre totale de hams que le classifieur a appris.
+        Fait partie des attributs du classifieur.    
+    epsilon : int
+        Paramètre du lissage.
+    """
     for mot in dicoProbas :
         ancienneValeurSpam = dicoProbas[mot][0]
         ancienneValeurSpam *= nbSpam
@@ -215,6 +243,30 @@ def predire_message(cheminMessage, nbSpam, nbHam, dicoProbas, PspamApriori, Pham
     return (logPspam + log(PspamApriori), logPham + log(PhamApriori))
 
 def test_dossiers(spamFolder, hamFolder, nbSpam, nbHam, dicoProbas, nbSpamsTest, nbHamsTest) :
+    """
+    Teste le filtre sur une base de test.
+    
+    Parameters
+    ----------
+    spamFolder : str
+        Le dossier de la base de test contenant les spams.
+    hamFolder : str
+        Le dossier de la base de test contenant les hams.
+    nbSpam : int
+        Le nombre totale de spams que le classifieur a appris.
+        Fait partie des attributs du classifieur.
+    nbHam : int
+        Le nombre totale de hams que le classifieur a appris.
+        Fait partie des attributs du classifieur.
+    dicoProbas : dict
+        Les probabilités sous forme de dictionnaire.
+        Modifié à la sortie de la fonction.
+        Fait partie des attributs du classifieur.
+    nbSpamsTest : int
+        Le nombre de spams à tester dans le dossier précisé.
+    nbHamsTest : int
+        Le nombre de hams à tester dans le dossier précisé.
+    """
     nbSpamsCourant = 0
     nbHamsCourant = 0
     nbErreursSpam = 0
@@ -231,11 +283,9 @@ def test_dossiers(spamFolder, hamFolder, nbSpam, nbHam, dicoProbas, nbSpamsTest,
         nbSpamsCourant += 1
         #PAS OUF, PROBLEMES DE PROBAS
         probas = predire_message(msgFilePath, nbSpam, nbHam, dicoProbas, PspamApriori, PhamApriori)
-        probaspam = abs(probas[0]/(probas[0]+probas[1]))/(nbSpam/(nbSpam+nbHam))
-        
-        print('Spam ' + msgFilePath + ', P(SPAM) = {0:.2f}, P(HAM) = {1:.2f}'.format(probaspam, 1-probaspam))
+        probaspam = 1. / (1. + exp(probas[1] - probas[0]))
 
-        #print(probas)
+        print('Spam ' + msgFilePath + ', P(SPAM) = {0}, P(HAM) = {1}'.format(probaspam, 1-probaspam))        #print(probas)
         
         if (probas[0] >= probas[1]) :
             print('-> identifié comme spam')
@@ -247,10 +297,9 @@ def test_dossiers(spamFolder, hamFolder, nbSpam, nbHam, dicoProbas, nbSpamsTest,
     for msgFilePath in glob(path.join(hamFolder, '*.txt')) :
         nbHamsCourant += 1
         probas = predire_message(msgFilePath, nbSpam, nbHam, dicoProbas, PspamApriori, PhamApriori)
-        probaham = abs(probas[1]/(probas[0]+probas[1]))/(nbHam/(nbSpam+nbHam))
+        probaspam = 1. / (1. + exp(probas[1] - probas[0]))
 
-        print('Ham ' + msgFilePath + ', P(SPAM) = {0:.2f}, P(HAM) = {1:.2f}'.format(1-probaham, probaham))
-
+        print('Ham ' + msgFilePath + ', P(SPAM) = {0}, P(HAM) = {1}'.format(probaspam, 1-probaspam))
         #print(probas)
         #input()
         

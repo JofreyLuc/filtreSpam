@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """
 Prédit si un mail est un spam ou un ham à partir d'un filtre/classifieur
-stocké dans un fichier passé en argument.
+stocké dans un fichier (json) passé en argument.
 """
 
 import argparse
@@ -11,7 +11,7 @@ from moduleFiltreAntiSpam import charger_filtre, predire_message
 def main() :
     # On parse les arguments
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawTextHelpFormatter)
-    parser.add_argument("fichierFiltre", metavar="fichierFiltre",
+    parser.add_argument("fichierFiltre", metavar="fichierFiltre", type=is_valid_file,
                         help="fichier contenant les données du filtre.")
     parser.add_argument("mail", metavar="mail", type=is_valid_file,
                         help="mail à tester.")

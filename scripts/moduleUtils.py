@@ -13,6 +13,21 @@ def eprint(*args, **kwargs):
     """
     print(*args, file=sys.stderr, **kwargs)
 
+def is_valid_mail_type(type):
+    """
+    Vérifie que le type du mail est soit SPAM soit HAM
+    (insensible à la casse).
+    
+    Raises
+    ------
+    ArgumentTypeError
+        Si la valeur passé en paramètre ne correspond pas à SPAM ou HAM.
+    """
+    type = type.upper()
+    if type != 'SPAM' and type != 'HAM':
+        raise ArgumentTypeError("Type invalide : %s. SPAM ou HAM requis." % type)
+    return type
+    
 def is_positive_integer(value):
     """
     Vérifie que la valeur passée en paramètre est bien un entier positif.

@@ -2,18 +2,15 @@
 """
 Réalise l'apprentissage du filtre anti-spam basé sur le classifieur naïf de Bayes
 avec la base d'apprentissage et sur le nombre de spam et de ham passés en paramètres
-et sauvegarde le classifieur/filtre dans le fichier passé en argument.
+et sauvegarde le classifieur/filtre dans le fichier passé en argument (format json).
 Si les nombres de spam et de ham ne sont pas précisés, l'ensemble de la base d'apprentissage sera utilisé.
 """
 
 from glob import glob
 import argparse
 import os
-from moduleUtils import is_positive_integer, is_valid_directory
-from moduleFiltreAntiSpam import charger_dictionnaire, apprendre_base, sauvegarder_filtre, lissage
-
-#: Paramètre du lissage
-EPSILON = 1
+from moduleUtils import is_positive_integer, is_valid_directory, is_valid_file
+from moduleFiltreAntiSpam import charger_dictionnaire, apprendre_base, sauvegarder_filtre, lissage, DEFAULT_DICT, EPSILON
 
 def main():
     # On parse les arguments
@@ -25,8 +22,20 @@ def main():
     parser.add_argument("nbSpam", nargs='?', metavar="nbSpam", type=is_positive_integer,
                         help="(optionnel) nombre de spam à apprendre parmi ceux de la base d'apprentissage.")
     parser.add_argument("nbHam", nargs='?', metavar="nbHam", type=is_positive_integer,
-                        help="(optionnel) nombre de ham à apprendre parmi ceux de la base d'apprentissage.")                  
+                        help="(optionnel) nombre de ham à apprendre parmi ceux de la base d'apprentissage.")
+    parser.add_argument("-d", "--dictionnaire", required = False, metavar="dictionnaire", dest="dict", type=is_valid_file,
+                        help="le dictionnaire contenant les mots à prendre en compte.\nPar défault, c'est le fichier '" + DEFAULT_DICT + "' qui sera utilisé.")                        
     args = parser.parse_args()
+
+    # Dictionnaire
+    if args.dict is not None:       # Dico précisé
+        dict = args.dict
+    else:                           # Non précisé
+        currentDir = os.getcwd()
+        dict = os.path.join(currentDir, DEFAULT_DICT)   # Fichier par défaut dans le répertoire courant
+        if not os.path.isdir(dict): # On vérifie que le fichier par défaut existe
+            raise ValueError("Le dictionnaire par défaut '" + DEFAULT_DICT + "' est introuvable dans " + currentDir + ".\nSi vous souhaitez utiliser un autre dictionnaire pour l'apprentissage, utilisez l'option -d.")
+        dict = DEFAULT_DICT
     
     spamDir = os.path.join(args.repAppr, 'spam')
     hamDir = os.path.join(args.repAppr, 'ham')
@@ -44,7 +53,7 @@ def main():
     
 
     # On commence l'apprentissage
-    dicoProbas = charger_dictionnaire('../dictionnaire1000en.txt')
+    dicoProbas = charger_dictionnaire(dict)
     print("Apprentissage sur " + str(nbSpam) + " spams et " + str(nbHam) + " hams...")
     apprendre_base(dicoProbas, spamDir, hamDir, nbSpam, nbHam)
     # On lisse
