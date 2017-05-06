@@ -5,7 +5,7 @@ Modifie un classifieur existant (provenant d'un fichier json) en apprenant un sp
 
 import argparse
 from moduleUtils import is_valid_mail_type, is_valid_file
-from moduleFiltreAntiSpam import charger_filtre
+from moduleFiltreAntiSpam import charger_filtre, ajouter_mail, sauvegarder_filtre, EPSILON
 
 def main():
     # On parse les arguments
@@ -23,7 +23,9 @@ def main():
     isSpam = args.type == "SPAM"
     
     # Apprentissage en ligne
-    (dicoProbas, nbSpam, nbHam) = charger_filtre(mail)    
+    (dicoProbas, nbSpam, nbHam) = charger_filtre(fichierFiltre)
+    ajouter_mail(dicoProbas, nbSpam, nbHam, mail, EPSILON, isSpam)
+    sauvegarder_filtre(fichierFiltre, dicoProbas, nbSpam, nbHam)
     
     print("Modification du filtre '" + fichierFiltre + "' par apprentissage sur le " + type + " '" + mail + "'.")
 
