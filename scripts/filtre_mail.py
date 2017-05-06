@@ -7,6 +7,7 @@ stocké dans un fichier (json) passé en argument.
 import argparse
 from moduleUtils import is_valid_file, eprint
 from moduleFiltreAntiSpam import charger_filtre, predire_message
+from math import exp
 
 def main() :
     # On parse les arguments
@@ -34,9 +35,9 @@ def main() :
     
     msg = "D'après '" + fichierFiltre + "', le message '" + mail + "' est un "
     if probaSpam > probaHam:
-        print(msg + "SPAM !")
+        print(msg + "SPAM à {0}% !".format(1. / (1. + exp(probaHam - probaSpam))))
     else:
-        print(msg + "HAM!")
+        print(msg + "HAM à {0}% !".format(1. / (1. + exp(probaSpam - probaHam))))
     
 if __name__ == '__main__':
     main()
