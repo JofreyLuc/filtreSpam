@@ -368,7 +368,7 @@ def charger_filtre(cheminFichier):
     return (dicoProbas, nbSpam, nbHam)
 
 def ajouter_mail(dicoProbas, nbSpam, nbHam, fichierMail, epsilon, isSpam) :
-    vecteurPresence = lire_message(dicoProbas, fichierMail)
+    vecteurPresence = lire_message(fichierMail, dicoProbas)
     
     for mot in dicoProbas :
         if isSpam :
