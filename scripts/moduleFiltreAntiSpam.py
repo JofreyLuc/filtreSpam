@@ -214,6 +214,7 @@ def predire_message(cheminMessage, nbSpam, nbHam, dicoProbas, PspamApriori, Pham
 
     return (logPspam + log(PspamApriori), logPham + log(PhamApriori))
 
+
 def test_dossiers(spamFolder, hamFolder, nbSpam, nbHam, dicoProbas, nbSpamsTest, nbHamsTest) :
     nbSpamsCourant = 0
     nbHamsCourant = 0
@@ -222,26 +223,14 @@ def test_dossiers(spamFolder, hamFolder, nbSpam, nbHam, dicoProbas, nbSpamsTest,
 
     PspamApriori = nbSpam/(nbSpam+nbHam)
     PhamApriori = nbHam/(nbSpam+nbHam)
-
-    #print(PspamApriori)
-    #print(PhamApriori)
-    #input()
     
     for msgFilePath in glob(path.join(spamFolder, '*.txt')) :
         nbSpamsCourant += 1
-        #PAS OUF, PROBLEMES DE PROBAS
         probas = predire_message(msgFilePath, nbSpam, nbHam, dicoProbas, PspamApriori, PhamApriori)
-        #probaspam = abs(probas[0]/(probas[0]+probas[1]))/(nbSpam/(nbSpam+nbHam))
 
-        print(probas)
-        print(exp(probas[0]))
-        print(exp(probas[1]))
-
-        probaspam = PspamApriori*exp(probas[0]) / ((exp(probas[0])*PspamApriori)+(exp(probas[1])*PhamApriori))
+        probaspam = 1. / (1. + exp(probas[1] - probas[0]))
         
-        print('Spam ' + msgFilePath + ', P(SPAM) = {0:.2f}, P(HAM) = {1:.2f}'.format(probaspam, 1-probaspam))
-        input()
-        #print(probas)
+        print('Spam ' + msgFilePath + ', P(SPAM) = {0}, P(HAM) = {1}'.format(probaspam, 1-probaspam))
         
         if (probas[0] >= probas[1]) :
             print('-> identifié comme spam')
@@ -253,12 +242,10 @@ def test_dossiers(spamFolder, hamFolder, nbSpam, nbHam, dicoProbas, nbSpamsTest,
     for msgFilePath in glob(path.join(hamFolder, '*.txt')) :
         nbHamsCourant += 1
         probas = predire_message(msgFilePath, nbSpam, nbHam, dicoProbas, PspamApriori, PhamApriori)
-        probaham = abs(probas[1]/(probas[0]+probas[1]))/(nbHam/(nbSpam+nbHam))
+        
+        probaspam = 1. / (1. + exp(probas[1] - probas[0]))
 
-        print('Ham ' + msgFilePath + ', P(SPAM) = {0:.2f}, P(HAM) = {1:.2f}'.format(1-probaham, probaham))
-
-        #print(probas)
-        #input()
+        print('Ham ' + msgFilePath + ', P(SPAM) = {0}, P(HAM) = {1}'.format(probaspam, 1-probaspam))
         
         if (probas[1] > probas[0]) :
             print('-> identifié comme ham')
