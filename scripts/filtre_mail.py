@@ -34,9 +34,10 @@ def main() :
     
     msg = "D'après '" + fichierFiltre + "', le message '" + mail + "' est un "
     if probaSpam > probaHam:
-        print(msg + "SPAM !")
+        msg += "SPAM !"
     else:
-        print(msg + "HAM!")
+        msg += "HAM !"
+    print(msg)
     
 if __name__ == '__main__':
     main()
