@@ -242,6 +242,7 @@ def predire_message(cheminMessage, nbSpam, nbHam, dicoProbas, PspamApriori, Pham
 
     return (logPspam + log(PspamApriori), logPham + log(PhamApriori))
 
+
 def test_dossiers(spamFolder, hamFolder, nbSpam, nbHam, dicoProbas, nbSpamsTest, nbHamsTest) :
     """
     Teste le filtre sur une base de test.
@@ -274,18 +275,13 @@ def test_dossiers(spamFolder, hamFolder, nbSpam, nbHam, dicoProbas, nbSpamsTest,
 
     PspamApriori = nbSpam/(nbSpam+nbHam)
     PhamApriori = nbHam/(nbSpam+nbHam)
-
-    #print(PspamApriori)
-    #print(PhamApriori)
-    #input()
     
     for msgFilePath in glob(path.join(spamFolder, '*.txt')) :
         nbSpamsCourant += 1
-        #PAS OUF, PROBLEMES DE PROBAS
         probas = predire_message(msgFilePath, nbSpam, nbHam, dicoProbas, PspamApriori, PhamApriori)
         probaspam = 1. / (1. + exp(probas[1] - probas[0]))
-
-        print('Spam ' + msgFilePath + ', P(SPAM) = {0}, P(HAM) = {1}'.format(probaspam, 1-probaspam))        #print(probas)
+        
+        print('Spam ' + msgFilePath + ', P(SPAM) = {0}, P(HAM) = {1}'.format(probaspam, 1-probaspam))
         
         if (probas[0] >= probas[1]) :
             print('-> identifié comme spam')
@@ -300,8 +296,6 @@ def test_dossiers(spamFolder, hamFolder, nbSpam, nbHam, dicoProbas, nbSpamsTest,
         probaspam = 1. / (1. + exp(probas[1] - probas[0]))
 
         print('Ham ' + msgFilePath + ', P(SPAM) = {0}, P(HAM) = {1}'.format(probaspam, 1-probaspam))
-        #print(probas)
-        #input()
         
         if (probas[1] > probas[0]) :
             print('-> identifié comme ham')
