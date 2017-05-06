@@ -386,7 +386,4 @@ def ajouter_mail(dicoProbas, nbSpam, nbHam, fichierMail, epsilon, isSpam) :
             exNbHam += 1
             dicoProbas[mot][1] = nb_occu / exNbHam
         
-    if isSpam : nbSpam += 1
-    else : nbHam += 1
-        
         

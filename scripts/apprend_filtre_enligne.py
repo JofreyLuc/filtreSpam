@@ -27,9 +27,7 @@ def main():
     ajouter_mail(dicoProbas, nbSpam, nbHam, mail, EPSILON, isSpam)
     sauvegarder_filtre(fichierFiltre, dicoProbas, nbSpam, nbHam)
 
-    if isSpam : typeM = 'spam'
-    else : typeM = 'ham'
-    print("Modification du filtre '" + fichierFiltre + "' par apprentissage sur le " + typeM + " '" + mail + "'.")
+    print("Modification du filtre '" + fichierFiltre + "' par apprentissage sur le " + args.type + " '" + mail + "'.")
 
     
 if __name__ == '__main__':
