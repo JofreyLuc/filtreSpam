@@ -24,4 +24,48 @@
 
 Pour ce projet, la répartition du travail s'est effectuée à peu près de la manière suivante : Alexis a écrit les focntions de chargement de dictionnaire, de lecture de mail, d'enregistrement et chargement de classifieur, et d'apprentissage en ligne. Jofrey s'est chargé des fonctions d'apprentissage, de lissage, de prédiction, de calcul de probabilités et de test. Nous avons tous deux travaillé sur le rapport en sus.
 
+\subsection*{Solution mise en oeuvre}
+
+Le filtre est programmé en python 3, et n'utilise que les libraires standard.
+
+La structure du code est la suivante : 
+\begin{itemize}
+\item \verb|moduleFiltreAntiSpam.py| contient toutes les fonctions proprement dites du classifieur (\verb|charger_dictionnaire|, \verb|apprendre_spam|, etc.)
+\item \verb|filtreAntiSpam.py| contient un main lançant l'apprentissage et le test d'ensembles de mails (sur les bases par défaut si rien n'est précisé) en affichant les résultats
+\item \verb|apprend_filtre.py| contient un main lançant l'apprentissage d'un ensemble de mail et stockant le classifieur obtenu dans un fichier (en Json)
+\item \verb|filtre_mail.py| contient un main lançant une prédiction d'un classifieur enregistré sur un mail précis
+\item \verb|apprend_filtre_enligne.py| contient un main permettant d'ajouter un mail dans la base d'apprentissage d'un classifieur et de recalculer ses paramètres sans refaire l'intégralité de l'apprentissage
+\item \verb|modulUtils.py| contient des fonctions "utiles" pas vraiment liées au classifieur (validation des paramètres, des entrées utilisateur, etc.)
+\end{itemize}
+
+\noindent Pour réaliser ce filtre, nous avons suivi les grandes étapes du sujet : 
+\begin{itemize}
+\item Pour le dictionnaire de mots, nous avons utilisé une liste python (qui est à la fois un tableau, une liste et un dictionnaire) à deux dimensions, de taille [nb_mots_dictionnaire] * [2]: la première dimension contient les mots du dictionnaire, qui sont les clefs de la liste, et la deuxième contient un tableau de deux valeurs, qui sont la probabilité de voir ce mot apparaître dans un spam et dans un ham. Dans la pratique, \verb|dico_probas['MONEY'][0]| renvoie la probabilité que le mot "money" apparaisse dans un spam et \verb|dico_probas['MONEY'][1]| la probabilité qu'il apparaisse dans un ham. Le dictionnaire est initialisé à [0,0] pour tous les mots.
+\item Le vecteur binaire représentant un mail est de la même forme, avec pour valeurs non pas un tableau de deux probabilités mais un booléen indiquant si le mot est présent dans le mail : \verb|dico_probas['MONEY']| renvoie \verb|True| ou \verb|False|.
+\item Apprendre un message consiste du coup simplement à parcourir les mots du message qui sont à \verb|True| dans son vecteur et à modifier la probabilité correspondante à ce mot dans le dictionnaire (en multipliant l'ancienne probabilité par le nombre de spams/hams, en y ajoutant 1, puis en la redivisant par le nombre de spams/hams).
+\item Le lissage se fait de la même manière, en parcourant tous les mots et en ajoutant un epsilon dans les probabilités.
+\item Pour prédire un message, on pacourt le dictionnaire et on somme les logs des probabilités spam/ham si le mot est présent dans le mail ou de 1 - ces probabilités si le mot n'est pas présent. On obtient deux valeurs, pour la somme des log des spam et celle des ham. On multiplie ces probabilités par la probabilité d'être un spam ou un ham à priori, et on compare les deux valeurs obtenues.
+\end{itemize}
+\noindent Pour les améliorations : 
+\begin{itemize}
+\item La sauvegarde d'un classifieur se fait en utilisant le sérialiseur json standard de python. On stocke ainsi dans un fichier le dictionnaire (mots + probabilités spam/ham) + le nombre de spams/hams utilisés pour ce classifieur. Le chargement d'un classifieur se fait aussi de manière standard.
+\item Pour faire l'apprentissage en ligne, on parcourt tout simplement le dictionnaire en transformant chaque probabilité spam ou ham (selon le type du message ajouté) tel que décrit dans le sujet : en ajoutant 1 au nombre de spam/ham au dénominateur, et en ajoutant éventuellement 1 au nombre 'occurences du mot au numérateur (si le mot est présent dans le mail). 
+\end{itemize}
+
+\subsection*{Difficultés rencontrées}
+
+La principale difficulté que nous avons rencontrée (en dehors de quelques problèmes techniques) a été d'afficher correctement les probabilités de spam ou ham \textit{à posteriori} lors de la prédiction. Le calcul direct en mettant à l'exponentielle les valeurs en log renvoyées par le calcul des sommes des probabilités du dictionnaire n'étant pas précis du tout (1 ou 0 quoi qu'il arrive), nous avons fini par mettre en oeuvre la solution conseillée, c'est à dire de diviser le numérateur et le diviseur dans le calcul par l'exponentielle de la somme des log spam/ham, ce qui nous permet d'avoir à calculer une seule exponentielle. Malheureusement ce n'est pas toujours parfait (la précision peut laisser à désirer quand les différences sont trop grandes, comme des calculs de $e^{-25}$ par exemple).
+
+\subsection*{Exécution du code}
+
+Les fichiers exécutables sont \verb|filtreAntiSpam.py|, \verb|apprend_filtre.py|, \verb|filtre_mail.py| et \verb|apprend_filtre_enligne.py|. Pour les exécuter, il suffit de se placer dans le répertoire \verb|scripts/| et de taper, selon le fichier (les descriptions des paramètres peuvent être obtenues en tapant \verb|python3 fichier.py -h|) : 
+\begin{itemize}
+\item \verb|python3 .py|
+\item \verb|python3 .py|
+\item \verb|python3 .py|
+\item \verb|python3 .py|
+\end{itemize}
+
+\subsection*{Exemples d'exécution et évaluation des performances}
+
 \end{document}
