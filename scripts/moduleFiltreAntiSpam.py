@@ -53,6 +53,7 @@ def charger_dictionnaire(dicoFilePath, minNbOfChar=DEFAULT_MIN_CHAR_DICT) :
 
     return dico
 
+
 def lire_message(messageFilePath, dico) :
     """
     Lit un message et le traduit en une représentation sous forme de vecteur binaire x à partir d’un dictionnaire.
@@ -83,6 +84,7 @@ def lire_message(messageFilePath, dico) :
                 
     return dicoPresence
 
+
 def apprendre_ham(dicoProbas, nbHam, message) :
     """
     Met à jour le classifieur en apprenant le ham.
@@ -109,6 +111,7 @@ def apprendre_ham(dicoProbas, nbHam, message) :
         ancienneValeur /= nbHam
         dicoProbas[mot][1] = ancienneValeur
 
+        
 def apprendre_spam(dicoProbas, nbSpam, message) :
     """
     Met à jour le classifieur en apprenant le spam.
@@ -135,6 +138,7 @@ def apprendre_spam(dicoProbas, nbSpam, message) :
         ancienneValeur /= nbSpam
         dicoProbas[mot][0] = ancienneValeur
 
+        
 def apprendre_base(dicoProbas, dossierSpam, dossierHam, nbSpam, nbHam) :
     """
     Met à jour le classifieur en apprenant l'ensemble des spams et des hams de la base.
@@ -192,15 +196,18 @@ def lissage(dicoProbas, nbSpam, nbHam, epsilon) :
         Paramètre du lissage.
     """
     for mot in dicoProbas :
+        #On ajoute epsilon dans la probabilité spam
         ancienneValeurSpam = dicoProbas[mot][0]
         ancienneValeurSpam *= nbSpam
         ancienneValeurSpam = (ancienneValeurSpam + epsilon) / (nbSpam + 2*epsilon)
         dicoProbas[mot][0] = ancienneValeurSpam
 
+        #On ajoute epsilon dans la probabilité ham
         ancienneValeurHam = dicoProbas[mot][1]
         ancienneValeurHam *= nbHam
         ancienneValeurHam = (ancienneValeurHam + epsilon) / (nbHam + 2*epsilon)
         dicoProbas[mot][1] = ancienneValeurHam
+
         
 def predire_message(cheminMessage, nbSpam, nbHam, dicoProbas, PspamApriori, PhamApriori) :
     """
@@ -275,10 +282,12 @@ def test_dossiers(spamFolder, hamFolder, nbSpam, nbHam, dicoProbas, nbSpamsTest,
 
     PspamApriori = nbSpam/(nbSpam+nbHam)
     PhamApriori = nbHam/(nbSpam+nbHam)
-    
+
+    #Pour tous les spams de test
     for msgFilePath in glob(path.join(spamFolder, '*.txt')) :
         nbSpamsCourant += 1
         probas = predire_message(msgFilePath, nbSpam, nbHam, dicoProbas, PspamApriori, PhamApriori)
+        #On calcule la proba a posteriori
         probaspam = 1. / (1. + exp(probas[1] - probas[0]))
         
         print('Spam ' + msgFilePath + ', P(SPAM) = {0}, P(HAM) = {1}'.format(probaspam, 1-probaspam))
@@ -289,10 +298,12 @@ def test_dossiers(spamFolder, hamFolder, nbSpam, nbHam, dicoProbas, nbSpamsTest,
             print('-> identifié comme ham **erreur**')
             nbErreursSpam += 1
         if nbSpamsCourant >= nbSpamsTest : break
-            
+
+    #Pour tous les hams de test
     for msgFilePath in glob(path.join(hamFolder, '*.txt')) :
         nbHamsCourant += 1
         probas = predire_message(msgFilePath, nbSpam, nbHam, dicoProbas, PspamApriori, PhamApriori)
+        #On calcule la proba a posteriori
         probaspam = 1. / (1. + exp(probas[1] - probas[0]))
 
         print('Ham ' + msgFilePath + ', P(SPAM) = {0}, P(HAM) = {1}'.format(probaspam, 1-probaspam))
@@ -313,6 +324,7 @@ def test_dossiers(spamFolder, hamFolder, nbSpam, nbHam, dicoProbas, nbSpamsTest,
 
     if (nbErreursSpam+nbErreursHam) == 0 : print('0% d\'erreurs sur l\'ensemble')
     else : print('{0:.2f}% d\'erreurs sur l\'ensemble'.format(((nbErreursSpam+nbErreursHam)/(nbSpamsTest+nbHamsTest))*100))
+
     
 def sauvegarder_filtre(cheminFichier, dicoProbas, nbSpam, nbHam):
     """
@@ -322,7 +334,7 @@ def sauvegarder_filtre(cheminFichier, dicoProbas, nbSpam, nbHam):
     ----------    
     cheminFichier : str
         Le chemin du fichier dans lequel sauvegarder le filtre.
-        Si le fichier existe déjà, il sera écraser.
+        Si le fichier existe déjà, il sera écrasé.
     dicoProbas : dict
         Les probabilités sous forme de dictionnaire.
         Fait partie des attributs du classifieur.
@@ -337,6 +349,7 @@ def sauvegarder_filtre(cheminFichier, dicoProbas, nbSpam, nbHam):
         jsonData = {}
         json.dump({NB_SPAM_JSON_NAME:nbSpam, NB_HAM_JSON_NAME:nbHam, DICO_PROBA_JSON_NAME:dicoProbas}, f)
 
+        
 def charger_filtre(cheminFichier):
     """
     Charge les attributs/données du filtre (c-à-d du classifieur) depuis un fichier.
@@ -367,7 +380,27 @@ def charger_filtre(cheminFichier):
             
     return (dicoProbas, nbSpam, nbHam)
 
+
 def ajouter_mail(dicoProbas, nbSpam, nbHam, fichierMail, epsilon, isSpam) :
+    """
+    Ajoute un mail supplémentaire dans le dictionnaire (en ligne).
+    
+    Parameters
+    ----------
+    dicoProbas : dict
+        Les probabilités sous forme de dictionnaire.
+    fichierMail : str
+        Le chemin du fichier dans lequel se trouve le mail.
+    nbHam : int
+        Le nombre total de spams que le classifieur a appris.
+    nbSpam : int
+        Le nombre total de spams que le classifieur a appris.
+    epsilon : int
+        Le epsilon utilisé dans le lissage.
+    isSpam : boolean
+        Le type de mail à apprendre.
+    """
+
     vecteurPresence = lire_message(fichierMail, dicoProbas)
     
     for mot in dicoProbas :
